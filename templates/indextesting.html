@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email & SMS Spam Detector</title>
+
+    <style>
+        :root {
+            --bg-body: #0b0c10;
+            --bg-card: #16181f;
+            --primary: #0f7a8a; /* steel teal */
+            --primary-soft: rgba(15, 122, 138, 0.18);
+            --primary-softer: rgba(15, 122, 138, 0.10);
+            --primary-dark: #0b5560;
+            --primary-gradient: linear-gradient(135deg, #0f7a8a, #154b52);
+            --accent: #b8860b; /* brass */
+            --border-soft: #28313a;
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.65);
+            --radius-lg: 18px;
+            --radius-pill: 999px;
+            --transition-fast: 0.18s ease-out;
+            --transition-med: 0.25s ease-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(15, 122, 138, 0.25), transparent 60%),
+                radial-gradient(circle at bottom right, rgba(21, 75, 82, 0.25), transparent 60%),
+                var(--bg-body);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: var(--text-main);
+        }
+
+        .container {
+            background: var(--bg-card);
+            border-radius: 28px;
+            box-shadow: var(--shadow-soft);
+            max-width: 1120px;
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid rgba(15, 23, 42, 0.7);
+        }
+
+        header {
+            position: relative;
+            padding: 28px 32px 24px;
+            background: linear-gradient(135deg, rgba(15, 122, 138, 0.2), rgba(21, 32, 43, 0.8));
+        }
+
+        header::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border-bottom: 1px solid rgba(30, 41, 59, 0.9);
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-pill {
+            width: 42px;
+            height: 42px;
+            border-radius: 18px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+        }
+
+        header h1 {
+            font-size: 1.6rem;
+            letter-spacing: 0.01em;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header h1 span.subtitle {
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .accuracy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: var(--radius-pill);
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .accuracy-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.18);
+        }
+
+        .stack-badge {
+            padding: 7px 12px;
+            border-radius: var(--radius-pill);
+            border: 1px dashed rgba(148, 163, 184, 0.8);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        main {
+            padding: 22px 28px 26px;
+        }
+
+        /* MAIN TABS */
+
+        .main-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 6px;
+            border-radius: 999px;
+            background: #111827;
+            border: 1px solid rgba(55, 65, 81, 0.9);
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .main-tab-button {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+        }
+
+        .main-tab-button span.icon {
+            font-size: 1.1rem;
+            transition: transform var(--transition-fast);
+        }
+
+        .main-tab-button:hover {
+            background: rgba(148, 163, 184, 0.14);
+            transform: translateY(-1px);
+        }
+
+        .main-tab-button.active {
+            color: var(--accent);
+            background: rgba(184, 134, 11, 0.18);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7);
+        }
+
+        .main-tab-button.active span.icon {
+            transform: scale(1.15);
+        }
+
+        .main-tab-pill {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        /* TAB CONTENT */
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tool-section {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-soft);
+            padding: 20px 18px 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-section::before {
+            content: "";
+            position: absolute;
+            inset-inline: 0;
+            top: 0;
+            height: 3px;
+            background: var(--primary-gradient);
+            opacity: 0.55;
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .tool-header-text h2 {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .tool-header-text p {
+            font-size: 0.86rem;
+            color: var(--text-muted);
+        }
+
+        .tool-hint {
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: rgba(184, 134, 11, 0.16);
+            padding: 6px 10px;
+            border-radius: var(--radius-pill);
+            border: 1px solid rgba(184, 134, 11, 0.5);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .tool-hint span.dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--accent);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-soft);
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+            background: #020617;
+            color: var(--text-main);
+        }
+
+        textarea::placeholder {
+            color: #6b7280;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #020617;
+            box-shadow: 0 0 0 1px rgba(15, 122, 138, 0.7), 0 8px 22px rgba(0, 0, 0, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 6px;
+            margin-bottom: 18px;
+        }
+
+        /* UPLOAD AREA */
+
+        .upload-area {
+            border-radius: 16px;
+            border: 1.5px dashed rgba(15, 122, 138, 0.9);
+            padding: 24px 18px;
+            text-align: center;
+            cursor: pointer;
+            background: var(--primary-softer);
+            transition:
+                background var(--transition-med),
+                border-color var(--transition-med),
+                transform var(--transition-med),
+                box-shadow var(--transition-med);
+        }
+
+        .upload-area:hover {
+            background: rgba(15, 122, 138, 0.24);
+            border-color: var(--primary-dark);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.65);
+            transform: translateY(-1px);
+        }
+
+        .upload-area.drag-over {
+            background: rgba(15, 122, 138, 0.34);
+            border-color: var(--primary-dark);
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        .upload-icon {
+            font-size: 2.1rem;
+            margin-bottom: 4px;
+        }
+
+        .upload-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .upload-subtext {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .file-info {
+            margin-top: 14px;
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #292524;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            gap: 8px;
+            color: #e5e7eb;
+        }
+
+        .file-info span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .remove-file {
+            background: #b91c1c;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .remove-file:hover {
+            background: #7f1d1d;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(185, 28, 28, 0.6);
+        }
+
+        /* BUTTONS */
+
+        button {
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-primary,
+        button.analyze-button,
+        .tool-section>button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border-radius: 999px;
+            background-image: var(--primary-gradient);
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.7);
+            transition:
+                transform var(--transition-fast),
+                box-shadow var(--transition-fast),
+                filter var(--transition-fast);
+        }
+
+        .btn-primary:hover,
+        button.analyze-button:hover,
+        .tool-section>button:hover {
+            transform: translateY(-1.5px);
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.85);
+            filter: brightness(1.05);
+        }
+
+        .btn-primary:active,
+        button.analyze-button:active,
+        .tool-section>button:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        button.analyze-button {
+            width: 100%;
+            margin-top: 6px;
+            padding-block: 12px;
+        }
+
+        .btn-secondary,
+        .reset-button {
+            margin-top: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 15px;
+            border-radius: 999px;
+            background: #1f2933;
+            color: #e5e7eb;
+            font-size: 0.85rem;
+            font-weight: 500;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7);
+            transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .btn-secondary:hover,
+        .reset-button:hover {
+            background: #4b5563;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.8);
+        }
+
+        /* RESULTS – SHARED */
+
+        .results-section {
+            margin-top: 18px;
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results {
+            margin-top: 14px;
+            background: #020617;
+            border-radius: 16px;
+            border: 1px solid var(--border-soft);
+            padding: 14px 14px 16px;
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .result-card {
+            background: #020617;
+            border-radius: 18px;
+            border: 1px solid rgba(15, 122, 138, 0.6);
+            padding: 16px 16px 14px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 10px;
+        }
+
+        .result-icon {
+            font-size: 2.1rem;
+        }
+
+        .result-classification {
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+        }
+
+        .result-confidence {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-top: 4px;
+            margin-bottom: 10px;
+        }
+
+        .risk-badge.safe {
+            background: #022c22;
+            color: #6ee7b7;
+        }
+
+        .risk-badge.low-risk {
+            background: #1f2933;
+            color: #facc15;
+        }
+
+        .risk-badge.medium-risk {
+            background: #3f2a1f;
+            color: #fed7aa;
+        }
+
+        .risk-badge.high-risk {
+            background: #450a0a;
+            color: #fecaca;
+        }
+
+        .probability-bars {
+            margin-top: 6px;
+        }
+
+        .probability-item {
+            margin-bottom: 12px;
+        }
+
+        .probability-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #e5e7eb;
+            margin-bottom: 4px;
+        }
+
+        .percentage {
+            color: var(--primary-soft);
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 7px;
+            border-radius: 999px;
+            background: #111827;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 999px;
+            transition: width 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .progress-fill.spam {
+            background: linear-gradient(90deg, #f97373, #b91c1c);
+        }
+
+        .progress-fill.ham {
+            background: linear-gradient(90deg, #22c55e, #15803d);
+        }
+
+        .accuracy-info {
+            margin-top: 10px;
+            font-size: 0.78rem;
+            color: #93c5fd;
+            background: #0b1120;
+            border-radius: 10px;
+            padding: 8px 9px;
+        }
+
+        /* TEXT ANALYSIS */
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .stat-card {
+            background: #020617;
+            border-radius: 12px;
+            padding: 10px 10px 9px;
+            text-align: center;
+            border: 1px solid var(--border-soft);
+        }
+
+        .stat-card .label {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .stat-card .value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .word-list {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px;
+        }
+
+        .word-item {
+            background: #020617;
+            border-radius: 999px;
+            padding: 7px 10px;
+            border: 1px solid rgba(15, 122, 138, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+        }
+
+        .word-item .word {
+            font-weight: 600;
+            color: var(--primary-soft);
+        }
+
+        .word-item .count {
+            color: var(--text-muted);
+        }
+
+        /* PLAGIARISM */
+
+        .similarity-bar {
+            width: 100%;
+            height: 28px;
+            border-radius: 999px;
+            background: #111827;
+            overflow: hidden;
+            margin: 12px 0 8px;
+        }
+
+        .similarity-fill {
+            height: 100%;
+            width: 0;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #22c55e, #f97316, #ef4444);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f9fafb;
+            font-size: 0.8rem;
+            font-weight: 700;
+            transition: width 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .plagiarism-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 13px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .plagiarism-badge.low {
+            background: #022c22;
+            color: #6ee7b7;
+        }
+
+        .plagiarism-badge.medium {
+            background: #3f2a1f;
+            color: #fed7aa;
+        }
+
+        .plagiarism-badge.high {
+            background: #450a0a;
+            color: #fecaca;
+        }
+
+        .plagiarism-badge.very-high {
+            background: #7f1d1d;
+            color: #fee2e2;
+        }
+
+        /* LOADING & ERROR */
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 16px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border-radius: 999px;
+            border: 3px solid #111827;
+            border-top-color: var(--primary);
+            animation: spin 0.9s linear infinite;
+            margin: 0 auto 8px;
+        }
+
+        .loading p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-message {
+            display: none;
+            margin-top: 10px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: #450a0a;
+            border: 1px solid #7f1d1d;
+            color: #fecaca;
+            font-size: 0.8rem;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        footer {
+            padding: 12px 20px 16px;
+            border-top: 1px solid rgba(30, 41, 59, 0.9);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            background: #020617;
+        }
+
+        footer p+p {
+            margin-top: 2px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            header {
+                padding: 20px;
+            }
+
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            main {
+                padding: 18px 16px 20px;
+            }
+
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .tool-section {
+                padding: 16px 14px 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <div class="title-row">
+                    <div class="logo-pill">📧</div>
+                    <h1>
+                        Spam Detection System
+                        <span class="subtitle">Email & SMS spam detection with text analysis tools</span>
+                    </h1>
+                </div>
+                <div class="header-meta">
+                    <div class="accuracy-badge">
+                        <span class="accuracy-dot"></span>
+                        Email: <strong>{{ "%.1f"|format(email_accuracy) }}%</strong> |
+                        SMS: <strong>{{ "%.1f"|format(sms_accuracy) }}%</strong>
+                    </div>
+                    <div class="stack-badge">
+                        Flask · Python · Naive Bayes · Text Analysis
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- MAIN NAV TABS -->
+            <div class="main-tabs">
+                <button class="main-tab-button active" onclick="switchMainTab('email', this)">
+                    <span class="icon">📧</span>
+                    <span>Email Spam</span>
+                </button>
+                <button class="main-tab-button" onclick="switchMainTab('sms', this)">
+                    <span class="icon">📱</span>
+                    <span>SMS Spam</span>
+                </button>
+                <button class="main-tab-button" onclick="switchMainTab('analysis', this)">
+                    <span class="icon">📊</span>
+                    <span>Text Analysis</span>
+                </button>
+                <button class="main-tab-button" onclick="switchMainTab('plagiarism', this)">
+                    <span class="icon">🔍</span>
+                    <span>Plagiarism</span>
+                </button>
+            </div>
+
+            <!-- =============== EMAIL SPAM DETECTOR TAB =============== -->
+            <div id="email-tab" class="tab-content active">
+                <div class="tool-section">
+                    <div class="tool-header">
+                        <div class="tool-header-text">
+                            <h2>Upload an email to classify</h2>
+                            <p>Drop in an email file and get spam probabilities & risk level.</p>
+                        </div>
+                        <div class="tool-hint">
+                            <span class="dot"></span>
+                            Works with <strong>.txt</strong> and <strong>.eml</strong> files
+                        </div>
+                    </div>
+
+                    <div class="upload-area" id="upload-area" ondrop="handleDrop(event)"
+                        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                        onclick="document.getElementById('file-input').click()">
+                        <div class="upload-icon">⬆️</div>
+                        <p class="upload-text">Drop your file here or click to browse</p>
+                        <p class="upload-subtext">We'll only read the content to classify it as spam or ham.</p>
+                        <input type="file" id="file-input" accept=".txt,.eml,.text" onchange="handleFileSelect(event)">
+                    </div>
+
+                    <div id="file-info" class="file-info" style="display: none;">
+                        <span id="file-name"></span>
+                        <button class="remove-file" onclick="removeFile(); event.stopPropagation();">✕</button>
+                    </div>
+
+                    <button class="analyze-button" id="analyze-file-btn" onclick="analyzeEmail()"
+                        style="display: none;">
+                        <span>🔍 Analyze Email</span>
+                    </button>
+
+                    <div id="email-loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Running the model on your email…</p>
+                    </div>
+
+                    <div id="email-error" class="error-message"></div>
+
+                    <div id="email-results" class="results-section">
+                        <div class="result-card">
+                            <div class="result-header">
+                                <div id="email-result-icon" class="result-icon"></div>
+                                <div>
+                                    <h3 id="email-result-classification" class="result-classification"></h3>
+                                    <p id="email-result-confidence" class="result-confidence"></p>
+                                    <div id="email-risk-badge" class="risk-badge"></div>
+                                </div>
+                            </div>
+
+                            <div class="probability-bars">
+                                <div class="probability-item">
+                                    <div class="probability-label">
+                                        <span>Spam probability</span>
+                                        <span id="email-spam-percentage" class="percentage"></span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div id="email-spam-progress" class="progress-fill spam"></div>
+                                    </div>
+                                </div>
+
+                                <div class="probability-item">
+                                    <div class="probability-label">
+                                        <span>Legitimate probability</span>
+                                        <span id="email-ham-percentage" class="percentage"></span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div id="email-ham-progress" class="progress-fill ham"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accuracy-info">
+                                ℹ️ This model was trained with {{ "%.1f"|format(email_accuracy) }}% accuracy
+                            </div>
+                        </div>
+
+                        <button class="reset-button" onclick="resetEmailAnalysis()">
+                            🔄 Analyze another email
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =============== SMS SPAM DETECTOR TAB =============== -->
+            <div id="sms-tab" class="tab-content">
+                <div class="tool-section">
+                    <div class="tool-header">
+                        <div class="tool-header-text">
+                            <h2>Check SMS message for spam</h2>
+                            <p>Paste an SMS message to detect if it's spam or legitimate.</p>
+                        </div>
+                        <div class="tool-hint">
+                            <span class="dot"></span>
+                            Works with any text message content
+                        </div>
+                    </div>
+
+                    <label for="sms-text">SMS Message:</label>
+                    <textarea id="sms-text" placeholder="Paste or type your SMS message here..." rows="6"></textarea>
+
+                    <button class="analyze-button" onclick="analyzeSMS()">
+                        🔍 Analyze SMS
+                    </button>
+
+                    <div id="sms-loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Analyzing SMS message…</p>
+                    </div>
+
+                    <div id="sms-error" class="error-message"></div>
+
+                    <div id="sms-results" class="results-section">
+                        <div class="result-card">
+                            <div class="result-header">
+                                <div id="sms-result-icon" class="result-icon"></div>
+                                <div>
+                                    <h3 id="sms-result-classification" class="result-classification"></h3>
+                                    <p id="sms-result-confidence" class="result-confidence"></p>
+                                    <div id="sms-risk-badge" class="risk-badge"></div>
+                                </div>
+                            </div>
+
+                            <div class="probability-bars">
+                                <div class="probability-item">
+                                    <div class="probability-label">
+                                        <span>Spam probability</span>
+                                        <span id="sms-spam-percentage" class="percentage"></span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div id="sms-spam-progress" class="progress-fill spam"></div>
+                                    </div>
+                                </div>
+
+                                <div class="probability-item">
+                                    <div class="probability-label">
+                                        <span>Legitimate probability</span>
+                                        <span id="sms-ham-percentage" class="percentage"></span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div id="sms-ham-progress" class="progress-fill ham"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accuracy-info">
+                                ℹ️ This model was trained with {{ "%.1f"|format(sms_accuracy) }}% accuracy
+                            </div>
+                        </div>
+
+                        <button class="reset-button" onclick="resetSMSAnalysis()">
+                            🔄 Analyze another SMS
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =============== TEXT ANALYSIS TAB =============== -->
+            <div id="analysis-tab" class="tab-content">
+                <div class="tool-section">
+                    <div class="tool-header">
+                        <div class="tool-header-text">
+                            <h2>Text statistics & most common words</h2>
+                            <p>Paste any text to inspect its structure and vocabulary.</p>
+                        </div>
+                        <div class="tool-hint">
+                            <span class="dot"></span>
+                            Quick overview of length, diversity & frequent words
+                        </div>
+                    </div>
+
+                    <label for="analysis-text">Text to analyze</label>
+                    <textarea id="analysis-text" placeholder="Paste your text here…" rows="8"></textarea>
+
+                    <button class="btn-primary" onclick="analyzeTextMetrics()">📊 Analyze</button>
+
+                    <div id="analysis-loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Crunching numbers…</p>
+                    </div>
+
+                    <div id="analysis-results" class="results">
+                        <div class="stat-grid">
+                            <div class="stat-card">
+                                <div class="label">Words</div>
+                                <div class="value" id="word-count">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="label">Characters</div>
+                                <div class="value" id="char-count">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="label">Sentences</div>
+                                <div class="value" id="sentence-count">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="label">Unique words</div>
+                                <div class="value" id="unique-words">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="label">Avg. word length</div>
+                                <div class="value" id="avg-word-length">0</div>
+                            </div>
+                        </div>
+
+                        <h3 style="margin-top: 14px; font-size: 0.95rem;">Most common words</h3>
+                        <div id="most-common-words" class="word-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =============== PLAGIARISM TAB =============== -->
+            <div id="plagiarism-tab" class="tab-content">
+                <div class="tool-section">
+                    <div class="tool-header">
+                        <div class="tool-header-text">
+                            <h2>Compare two texts for similarity</h2>
+                            <p>Quickly see how close two pieces of writing are.</p>
+                        </div>
+                        <div class="tool-hint">
+                            <span class="dot"></span>
+                            Helpful for drafts, paraphrasing & code comments
+                        </div>
+                    </div>
+
+                    <div class="two-column">
+                        <div>
+                            <label for="plagiarism-text1">Text 1</label>
+                            <textarea id="plagiarism-text1" placeholder="Paste the first text…" rows="7"></textarea>
+                        </div>
+                        <div>
+                            <label for="plagiarism-text2">Text 2</label>
+                            <textarea id="plagiarism-text2" placeholder="Paste the second text…" rows="7"></textarea>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" onclick="checkPlagiarism()">🔍 Check similarity</button>
+
+                    <div id="plagiarism-loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Comparing token overlap…</p>
+                    </div>
+
+                    <div id="plagiarism-results" class="results">
+                        <h3 style="font-size: 0.95rem;">Similarity result</h3>
+                        <div class="result-item" style="border-bottom: none;">
+                            <div class="similarity-bar">
+                                <div id="similarity-fill" class="similarity-fill">
+                                    <span id="similarity-percent">0%</span>
+                                </div>
+                            </div>
+                            <div class="result-label" style="margin-top: 4px;">Plagiarism level</div>
+                            <div id="plagiarism-badge" class="plagiarism-badge low">Low</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer>
+            <p>Built with Flask, Python, and Machine Learning</p>
+            <p>Naive Bayes Classifier · Text Analysis & Similarity Detection</p>
+        </footer>
+    </div>
+
+    <script>
+        // ==================== MAIN TAB SWITCHING ====================
+        function switchMainTab(tabName, buttonEl) {
+            document.querySelectorAll(".tab-content").forEach(tab => {
+                tab.classList.remove("active");
+            });
+
+            document.querySelectorAll(".main-tab-button").forEach(btn => {
+                btn.classList.remove("active");
+            });
+
+            const tab = document.getElementById(tabName + "-tab");
+            if (tab) tab.classList.add("active");
+            if (buttonEl) buttonEl.classList.add("active");
+        }
+
+        // ==================== EMAIL SPAM DETECTOR ====================
+        let selectedFile = null;
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                document.getElementById("file-name").textContent = "📄 " + file.name;
+                document.getElementById("file-info").style.display = "flex";
+                document.getElementById("analyze-file-btn").style.display = "inline-flex";
+            }
+        }
+
+        function removeFile() {
+            selectedFile = null;
+            document.getElementById("file-input").value = "";
+            document.getElementById("file-info").style.display = "none";
+            document.getElementById("analyze-file-btn").style.display = "none";
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            document.getElementById("upload-area").classList.add("drag-over");
+        }
+
+        function handleDragLeave(event) {
+            document.getElementById("upload-area").classList.remove("drag-over");
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            document.getElementById("upload-area").classList.remove("drag-over");
+
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById("file-input").files = files;
+                handleFileSelect({ target: { files: files } });
+            }
+        }
+
+        function analyzeEmail() {
+            if (!selectedFile) {
+                showError("email", "Please select a file to analyze.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+
+            showLoading("email", true);
+            hideError("email");
+
+            fetch("/upload", {
+                method: "POST",
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showLoading("email", false);
+                    if (data.error) {
+                        showError("email", data.error);
+                    } else {
+                        displayResults("email", data);
+                    }
+                })
+                .catch(error => {
+                    showLoading("email", false);
+                    showError("email", "Network error: " + error.message);
+                });
+        }
+
+        function resetEmailAnalysis() {
+            selectedFile = null;
+            document.getElementById("file-input").value = "";
+            document.getElementById("file-info").style.display = "none";
+            document.getElementById("analyze-file-btn").style.display = "none";
+            document.getElementById("email-results").classList.remove("active");
+            document.getElementById("email-spam-progress").style.width = "0%";
+            document.getElementById("email-ham-progress").style.width = "0%";
+        }
+
+        // ==================== SMS SPAM DETECTOR ====================
+        function analyzeSMS() {
+            const text = document.getElementById("sms-text").value;
+
+            if (!text.trim()) {
+                showError("sms", "Please enter an SMS message to analyze.");
+                return;
+            }
+
+            showLoading("sms", true);
+            hideError("sms");
+
+            fetch("/analyze_sms", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showLoading("sms", false);
+                    if (data.error) {
+                        showError("sms", data.error);
+                    } else {
+                        displayResults("sms", data);
+                    }
+                })
+                .catch(error => {
+                    showLoading("sms", false);
+                    showError("sms", "Network error: " + error.message);
+                });
+        }
+
+        function resetSMSAnalysis() {
+            document.getElementById("sms-text").value = "";
+            document.getElementById("sms-results").classList.remove("active");
+            document.getElementById("sms-spam-progress").style.width = "0%";
+            document.getElementById("sms-ham-progress").style.width = "0%";
+        }
+
+        // ==================== SHARED RESULTS DISPLAY ====================
+        function displayResults(type, data) {
+            const isSpam = data.classification === "Spam";
+            document.getElementById(`${type}-result-icon`).textContent = isSpam ? "⚠️" : "✅";
+            document.getElementById(`${type}-result-classification`).textContent = data.classification;
+            document.getElementById(`${type}-result-confidence`).textContent = `Confidence: ${data.confidence}%`;
+
+            const riskBadge = document.getElementById(`${type}-risk-badge`);
+            riskBadge.textContent = data.risk_lvl;
+            riskBadge.className = `risk-badge ${data.risk_class}`;
+
+            document.getElementById(`${type}-spam-percentage`).textContent = `${data.spam_probability}%`;
+            document.getElementById(`${type}-ham-percentage`).textContent = `${data.ham_probability}%`;
+
+            document.getElementById(`${type}-spam-progress`).style.width = `${data.spam_probability}%`;
+            document.getElementById(`${type}-ham-progress`).style.width = `${data.ham_probability}%`;
+
+            const results = document.getElementById(`${type}-results`);
+            results.classList.add("active");
+            results.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function showLoading(type, show) {
+            document.getElementById(`${type}-loading`).classList.toggle("active", show);
+        }
+
+        function showError(type, message) {
+            const errorDiv = document.getElementById(`${type}-error`);
+            errorDiv.textContent = message;
+            errorDiv.classList.add("active");
+        }
+
+        function hideError(type) {
+            document.getElementById(`${type}-error`).classList.remove("active");
+        }
+
+        // ==================== TEXT ANALYSIS ====================
+        function analyzeTextMetrics() {
+            const text = document.getElementById("analysis-text").value;
+
+            if (!text.trim()) {
+                alert("Please enter some text to analyze.");
+                return;
+            }
+
+            document.getElementById("analysis-loading").classList.add("active");
+
+            fetch("/analyze", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("analysis-loading").classList.remove("active");
+
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                        return;
+                    }
+
+                    document.getElementById("word-count").textContent = data.word_count;
+                    document.getElementById("char-count").textContent = data.char_count;
+                    document.getElementById("sentence-count").textContent = data.sentence_count;
+                    document.getElementById("unique-words").textContent = data.unique_words;
+                    document.getElementById("avg-word-length").textContent = data.avg_word_length;
+
+                    const wordList = document.getElementById("most-common-words");
+                    wordList.innerHTML = "";
+                    data.most_common_words.forEach(item => {
+                        const div = document.createElement("div");
+                        div.className = "word-item";
+                        div.innerHTML = `<div class="word">${item.word}</div><div class="count">${item.count}×</div>`;
+                        wordList.appendChild(div);
+                    });
+
+                    document.getElementById("analysis-results").classList.add("active");
+                })
+                .catch(error => {
+                    document.getElementById("analysis-loading").classList.remove("active");
+                    alert("Error: " + error.message);
+                });
+        }
+
+        // ==================== PLAGIARISM ====================
+        function checkPlagiarism() {
+            const text1 = document.getElementById("plagiarism-text1").value;
+            const text2 = document.getElementById("plagiarism-text2").value;
+
+            if (!text1.trim() || !text2.trim()) {
+                alert("Please enter both texts.");
+                return;
+            }
+
+            document.getElementById("plagiarism-loading").classList.add("active");
+
+            fetch("/plagiarism", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text1: text1, text2: text2 })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("plagiarism-loading").classList.remove("active");
+
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                        return;
+                    }
+
+                    const fill = document.getElementById("similarity-fill");
+                    fill.style.width = data.similarity + "%";
+                    document.getElementById("similarity-percent").textContent = data.similarity + "%";
+
+                    const badge = document.getElementById("plagiarism-badge");
+                    badge.textContent = data.plagiarism_level;
+                    badge.className = "plagiarism-badge " + data.plagiarism_class;
+
+                    document.getElementById("plagiarism-results").classList.add("active");
+                })
+                .catch(error => {
+                    document.getElementById("plagiarism-loading").classList.remove("active");
+                    alert("Error: " + error.message);
+                });
+        }
+    </script>
+</body>
+
+</html>
