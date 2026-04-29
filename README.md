@@ -12,7 +12,7 @@ This project WILL REMAIN PRIVATE until final submission.
 |   ├── App.py               <--- Flask / Train Model / Predict Classification
 |
 | ========================== HTML ============================================= 
-├── /app         <---- HTML FOLDER
+├── /templates         <---- HTML FOLDER
 |   ├── indextesting.html 
 |
 | ========================== DATA ========================================
