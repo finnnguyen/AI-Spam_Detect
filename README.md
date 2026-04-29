@@ -3,28 +3,21 @@ Current Github Branch - Group Collaboration
 This project WILL REMAIN PRIVATE until final submission.
 
 
-========================== PROJECT STRUCTURE ==========================================
+## Project Structure
 
-* Spam_Detector_with_Additional_tools * 
-|
-| ======================== Src ==========================================
-├── /src
-|   ├── App.py               <--- Flask / Train Model / Predict Classification
-|
-| ========================== HTML ============================================= 
-├── /templates         <---- HTML FOLDER
-|   ├── indextesting.html 
-|
-| ========================== DATA ========================================
-├── /data
-|   ├── csv/
-|         ├── email_spam.csv
-|         ├── sms_spam.csv               
-|   
-| ========================= Documentation ============================================
-├── requirements.txt    <--- Required Libraries
-├── README              <--- Readme File
-
+```text
+Spam_Detector_with_Additional_tools
+├── src
+│   └── App.py              # Flask app, train model, predict classification
+├── templates
+│   └── indextesting.html   # HTML user interface
+├── data
+│   └── csv
+│       ├── email_spam.csv
+│       └── sms_spam.csv
+├── requirements.txt        # Required libraries
+└── README.md               # Project documentation
+```
 
 
 ========================== PROJECT DESCRIPTION ==========================================
