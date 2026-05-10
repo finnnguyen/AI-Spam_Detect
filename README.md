@@ -32,7 +32,7 @@ The user interface is built with HTML and provides a simple User Interface for u
 1. Clone the repository to your local machine or download the zip file.
 2. Navigate to the project directory. 
 3. Install the required libraries using the command: pip install -r ./requirements.txt (make sure you have Python and pip installed)
-4. Run the Flask application using the command: python src\App.py   
+4. Run the Flask application using the command: python ./src/App.py   
 5. Open your web browser and go to http://127.0.0.1:5000/ to access the application.
 6. Upload a text file to classify it as "spam" or "not spam".
 7. Video Demo Link: will be provided upon final submission.
