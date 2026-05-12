@@ -46,6 +46,8 @@ Libraries needed to run the application:
 - Werkzeug
 ## CONTRIBUTORS 
 - Finn Nguyen
-
+- Alan Hoang
+- Michael Aladesuru
+- Osvaldo Torres Guerrero
 ## Testing  
 Test Common Words : https://gist.github.com/MattIPv4/045239bc27b16b2bcf7a3a9a4648c08a #file-bee-movie-script
