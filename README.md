@@ -1,53 +1,78 @@
-Current Github Branch - Group Collaboration 
+# Spam Tool Kit
 
-This project WILL REMAIN PRIVATE until final submission.
+An AI-powered web application that detects spam in emails and SMS messages, with additional tools for text analysis and plagiarism detection — deployed as a live Flask web app.
 
+**Tech:** Python · scikit-learn · Flask · CountVectorizer · Multinomial Naive Bayes · pandas · NumPy · HTML · CSS · JavaScript
+
+---
+
+## Features
+
+| Module | What it does |
+|---|---|
+| **Email Spam** | Upload a `.txt` or `.eml` file — returns spam/ham label, confidence score, and risk level |
+| **SMS Spam** | Paste any SMS message — same output as email module |
+| **Text Analysis** | Word count, character count, sentence count, unique words, avg word length, most common words |
+| **Plagiarism Detection** | Compare two texts using Jaccard similarity — returns similarity % and plagiarism level |
+
+---
+
+## Model Performance
+
+Trained on Kaggle's `email_spam.csv` and `sms_spam.csv` datasets with an 80/20 train/test split:
+
+| Model | Accuracy | Precision | Recall | F1-Score |
+|---|---|---|---|---|
+| Email Spam (Naive Bayes) | 97.20% | — | — | — |
+| SMS Spam (Naive Bayes) | **99.28%** | **100%** | 94.63% | 97.24% |
+
+- Confusion matrix (SMS): 966 true positives, 0 false negatives, 1 false positive
+- Inference speed: under 1–2ms per message
+- Training time: under 1 second
+
+---
+
+## Pipeline
+
+```
+Raw text → Data cleaning → Label encoding (spam=1, ham=0)
+→ CountVectorizer (bag-of-words) → Multinomial Naive Bayes
+→ Spam/Ham label + Probability score + Confidence level + Risk category
+```
+
+---
 
 ## Project Structure
 
-```text
-Spam_Detector_with_Additional_tools
-├── src
-│   └── App.py              # Flask app, train model, predict classification
-├── templates
-│   └── indextesting.html   # HTML user interface
-├── data
-│   └── csv
-│       ├── email_spam.csv
-│       └── sms_spam.csv
-├── requirements.txt        # Required libraries
-└── README.md               # Project documentation
+```
+AI-Spam_Detect/
+├── src/
+│   └── App.py              # Flask server, model training, prediction routes
+├── templates/
+│   └── indextesting.html   # Web UI (HTML/CSS/JS)
+├── data/
+│   └── csv/
+│       ├── email_spam.csv  # Kaggle email spam dataset
+│       └── sms_spam.csv    # Kaggle SMS spam dataset
+└── requirements.txt
 ```
 
+---
 
-## Project Description
-This project is a Spam Detector web application built using Flask and a Naive Bayes classification model. 
-The application allows users to upload text messages and classify them as either "spam" or "not spam". 
-The model is trained on a dataset of labeled messages (email_spam.csv and sms_spam.csv) and utilizes various text processing techniques to improve classification accuracy.
+## Setup
 
-In addition to spam detection, the application includes additional tools for text analysis, such as word frequency visualization and sentiment analysis.
-The user interface is built with HTML and provides a simple User Interface for users to interact with the application.
+```bash
+git clone https://github.com/finnnguyen/AI-Spam_Detect
+cd AI-Spam_Detect
+pip install -r requirements.txt
+python src/App.py
+```
 
-## How to Run the Application
-1. Clone the repository to your local machine or download the zip file.
-2. Navigate to the project directory. 
-3. Install the required libraries using the command: pip install -r ./requirements.txt (make sure you have Python and pip installed)
-4. Run the Flask application using the command: python ./src/App.py   
-5. Open your web browser and go to http://127.0.0.1:5000/ to access the application.
-6. Upload a text file to classify it as "spam" or "not spam".
-7. Video Demo Link: will be provided upon final submission.
+Open [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
-## REQUIREMENTS 
-Libraries needed to run the application:
-- Flask
-- pandas
-- scikit-learn
-- numpy
-- Werkzeug
-## CONTRIBUTORS 
-- Finn Nguyen
-- Alan Hoang
-- Michael Aladesuru
-- Osvaldo Torres Guerrero
-## Testing  
-Test Common Words : https://gist.github.com/MattIPv4/045239bc27b16b2bcf7a3a9a4648c08a #file-bee-movie-script
+---
+
+## Credits
+
+Built by **Finn Nguyen** (all technical implementation — model, backend, and UI) as part of a group project.  
+CPSC 483 · Cal State Fullerton
