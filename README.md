@@ -75,4 +75,4 @@ Open [http://127.0.0.1:5000](http://127.0.0.1:5000)
 ## Credits
 
 Built by **Finn Nguyen** (all technical implementation — model, backend, and UI) as part of a group project.  
-CPSC 483 · Cal State Fullerton
+CPSC 483 - Machine Lerning · Cal State Fullerton
